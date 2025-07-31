@@ -11,15 +11,9 @@ SCREEN_HEIGHT = 800
 ground_height = 100
 game_over = False
 # Score settings
-score = 0
-bonus_given = {
-    50: False,
-    100: False,
-    150: False,
-    250: False,
-    500: False,
-    1000: False
-}
+pipe_count = 0
+score = pipe_count
+
 font = pygame.font.SysFont("Arial", 40, bold=True)
 
 
@@ -43,8 +37,8 @@ bird_x = 150
 bird_y = SCREEN_HEIGHT // 2
 bird_radius = 20
 bird_velocity = 0
-gravity = 0.5
-flap_strength = -10  # Negative means "go up"
+gravity = 0.3
+flap_strength = -6  # Negative means "go up"
 
 # pipes lists
 pipes = []  # List of dictionaries, each with 'x', 'gap_y'
@@ -75,8 +69,18 @@ while True:
                     bird_y = SCREEN_HEIGHT // 2
                     bird_velocity = 0
                     pipes = []
+                    pipe_count = 0
                     score = 0
-                    bonus_given = {key: False for key in bonus_given}  # Reset bonuses
+                    pygame.time.set_timer(SPAWN_PIPE_EVENT, 1500)  # Restart pipe spawning
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_SPACE:
+                    # Reset game
+                    game_over = False
+                    bird_y = SCREEN_HEIGHT // 2
+                    bird_velocity = 0
+                    pipes = []
+                    pipe_count = 0
+                    score = 0
                     pygame.time.set_timer(SPAWN_PIPE_EVENT, 1500)  # Restart pipe spawning
 
     if not game_over:
@@ -131,28 +135,11 @@ while True:
     for pipe in pipes:
         # Score logic: give 2 points when bird crosses the center of a pipe
         if not pipe.get('scored') and pipe['x'] + PIPE_WIDTH < bird_x:
-            score += 2
-            pipe['scored'] = True  # Prevent multiple scoring for the same pipe
+            pipe_count += 1  # Keep track of pipes passed
+            score += pipe_count
+            pipe['scored'] = True
 
-            # Bonus logic
-            if score >= 50 and not bonus_given[50]:
-                score += 10
-                bonus_given[50] = True
-            if score >= 100 and not bonus_given[100]:
-                score += 25
-                bonus_given[100] = True
-            if score >= 150 and not bonus_given[150]:
-                score += 50
-                bonus_given[150] = True
-            if score >= 250 and not bonus_given[250]:
-                score += 75
-                bonus_given[250] = True
-            if score >= 500 and not bonus_given[500]:
-                score += 100
-                bonus_given[500] = True
-            if score >= 1000 and not bonus_given[1000]:
-                score += 200
-                bonus_given[1000] = True
+
 
         # Draw the pipes
         x = pipe['x']
@@ -175,7 +162,7 @@ while True:
     if game_over:
         font = pygame.font.Font(None, 74)
         game_over_text = font.render("GAME OVER", True, (255, 0, 0))
-        restart_text = font.render("Press R to Restart", True, (255, 255, 255))
+        restart_text = font.render("Press SPC-Bar or R to Restart", True, (255, 255, 255))
         
         # Center the text
         screen.blit(game_over_text, (SCREEN_WIDTH//2 - game_over_text.get_width()//2, SCREEN_HEIGHT//2 - 50))
